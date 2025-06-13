@@ -1,38 +1,73 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+import random
+import json
 
-# Replace 'YOUR_BOT_TOKEN' with your actual bot token
-TOKEN = 'YOUR_BOT_TOKEN'
-
-# Replace with the ID of your testing server (guild)
-TEST_GUILD_ID = # <--- PUT YOUR GUILD ID HERE
+CONFIG_FILE = 'config.json'
+def load_config():
+    with open(CONFIG_FILE, 'r') as f:
+        return json.load(f)
+config = load_config()
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 last_deleted_message = None
 
-# --- List of Activities ---
-ACTIVITIES = [
-    discord.Game(name='Playing together'),
-    discord.Activity(type=discord.ActivityType.watching, name='Watching for bad avatheries'),
-    discord.Activity(type=discord.ActivityType.listening, name='To server complaints.'),
-    discord.Activity(type=discord.ActivityType.competing, name='Command actions'),
-]
-
-async def cycle_activities():
-    while True: # Loop indefinitely
-        for activity in ACTIVITIES:
-            print(f"Setting activity to: {activity.name} (Type: {activity.type.name})")
-            await bot.change_presence(activity=activity)
-            await asyncio.sleep(60)
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
     await bot.tree.sync()
 
-# Apply the manage_guild permission check to all commands
+# --- SET BOT ACTIVITY HERE ---
+    activity_type_str = config['bot_activity'].get('type', 'playing').lower()
+    activity_name = config['bot_activity'].get('name', None)
+    activity_url = config['bot_activity'].get('url', None)
+
+    activity = None
+    if activity_name:
+        if activity_type_str == "playing":
+            activity = discord.Game(name=activity_name)
+        elif activity_type_str == "streaming":
+            if activity_url:
+                activity = discord.Streaming(name=activity_name, url=activity_url)
+            else:
+                print("Warning: Streaming activity requires a 'url' in config.json. Defaulting to Playing.")
+                activity = discord.Game(name=activity_name)
+        elif activity_type_str == "listening":
+            activity = discord.Activity(type=discord.ActivityType.listening, name=activity_name)
+        elif activity_type_str == "watching":
+            activity = discord.Activity(type=discord.ActivityType.watching, name=activity_name)
+        elif activity_type_str == "competing":
+            activity = discord.Activity(type=discord.ActivityType.competing, name=activity_name)
+        else:
+            print(f"Unknown activity type '{activity_type_str}' in config.json. Defaulting to Playing.")
+            activity = discord.Game(name=activity_name)
+
+    if activity:
+        await bot.change_presence(activity=activity)
+        print(f"Bot activity set to: {activity_type_str.capitalize()} {activity_name}")
+    # --- END SET BOT ACTIVITY ---
+
+        # --- UPDATE: Slash Command Syncing using Guild ID from config.json ---
+    try:
+        guild_id = config.get('guild_id') # Get guild_id from config
+        if guild_id:
+            # Ensure the guild_id is an integer for discord.Object
+            target_guild = discord.Object(id=int(guild_id)) 
+            synced = await bot.tree.sync(guild=target_guild)
+            print(f"Synced {len(synced)} slash commands to guild ID: {guild_id}")
+        else:
+            # If guild_id is not in config.json, sync globally (takes longer)
+            synced = await bot.tree.sync() 
+            print(f"Synced {len(synced)} slash commands globally (might take up to an hour to appear).")
+    except Exception as e:
+        print(f"Failed to sync slash commands: {e}")
+    # --- END UPDATE: Slash Command Syncing ---
+
+
+# Apply the permissions check to all commands
 def is_manage_guild():
     async def predicate(interaction: discord.Interaction):
         return interaction.user.guild_permissions.manage_guild
@@ -65,10 +100,23 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
         print(f"Failed to send error message to user: {e}")
 
        
+def is_command_enabled():
+    async def predicate(interaction: discord.Interaction):
+        command_name = interaction.command.name
+
+        # Check if the command exists in our config and if it's enabled
+        if command_name in config['enabled_commands']:
+            return config['enabled_commands'][command_name]
+        else:
+            return False # Default to disabled.
+    return app_commands.check(predicate)
+
+
 
               #Slash Command:DM
 @bot.tree.command(name='dm', description='Sends a direct message to a member.')
 @is_manage_guild()
+@is_command_enabled()
 async def send_dm(interaction: discord.Interaction, member: discord.Member, message: str = "No message provided."):
     """Sends a direct message to the specified member."""
     try:
@@ -82,6 +130,7 @@ async def send_dm(interaction: discord.Interaction, member: discord.Member, mess
                #Slash Command:Delete Channel
 @bot.tree.command(name='delete-channel', description='Deletes the specified channel.')
 @is_manage_guild()
+@is_command_enabled()
 async def delete_channel(interaction: discord.Interaction, channel: discord.TextChannel):
     """Deletes the specified channel."""
     try:
@@ -109,6 +158,7 @@ async def on_message_delete(message):
                      #Slash Command:Last Deleted
 @bot.tree.command(name='last-deleted', description='Shows the last deleted non-bot message publicly.')
 @is_manage_channel()
+@is_command_enabled()
 async def last_deleted(interaction: discord.Interaction):
     """Shows the author and content of the last deleted non-bot message publicly."""
     global last_deleted_message
@@ -121,6 +171,7 @@ async def last_deleted(interaction: discord.Interaction):
 
         # --- Slash Command: Avatar ---
 @bot.tree.command(name="avatar", description="Displays a user's avatar.")
+@is_command_enabled()
 @app_commands.describe(member="The user whose avatar you want to see. Defaults to yourself.")
 async def avatar_command(interaction: discord.Interaction, member: discord.Member = None):
     """
@@ -146,6 +197,7 @@ async def avatar_command(interaction: discord.Interaction, member: discord.Membe
                 #Slash Command:Slowmode
 @bot.tree.command(name='slowmode', description='Sets the slow mode delay for this channel.')
 @is_manage_channel()
+@is_command_enabled()
 @app_commands.describe(seconds='The slow mode delay in seconds (0 to disable).')
 async def slowmode(interaction: discord.Interaction, seconds: int):
     """Sets the slow mode delay for the current channel."""
@@ -173,6 +225,7 @@ def hex_to_discord_color(hex_string: str) -> discord.Color:
         # Slash Command: Change User Nickname
 @bot.tree.command(name="nickname", description="Changes the nickname of a specified user.")
 @is_manage_channel()
+@is_command_enabled()
 @app_commands.describe(
     user="The user whose nickname you want to change.",
     new_nickname="The new nickname for the user. Leave empty to remove nickname."
@@ -203,6 +256,7 @@ async def change_nickname(interaction: discord.Interaction, user: discord.Member
 # --- Slash Command: Embed ---
 @bot.tree.command(name="embed", description="Creates and sends a custom embed message.")
 @is_manage_guild()
+@is_command_enabled()
 @app_commands.describe(
     channel="The channel to send the embed in (defaults to current).",
     title="The main title of the embed.",
@@ -285,8 +339,23 @@ async def embed_command(
             ephemeral=True
         )
 
+        # --- Rate Slash Command ---
+@bot.tree.command(name="rate", description="Get a random rating out of 10 for your text.")
+@is_command_enabled()
+@app_commands.describe(text="The text you want to get a rating for.")
+async def rate(interaction: discord.Interaction, text: str):
+    """
+    Rates the given text with a random number out of 10.
+    """
+    rating = random.randint(0, 10)
+    response_message = f"I'd rate '{text}' a **{rating}/10**! :star:"
+
+    await interaction.response.send_message(response_message)
+
+
 @bot.tree.command(name='purge', description='Deletes a specified number of messages.')
 @is_manage_channel()
+@is_command_enabled()
 @app_commands.describe(amount='The number of messages to delete.')
 async def purge(interaction: discord.Interaction, amount: int):
     """Deletes a specified number of messages from the current channel."""
@@ -297,4 +366,6 @@ async def purge(interaction: discord.Interaction, amount: int):
     else:
         await interaction.response.send_message("Please specify a number of messages greater than 0 to purge.", ephemeral=True)
 
+config = load_config()
+TOKEN = config.get('token')
 bot.run(TOKEN)

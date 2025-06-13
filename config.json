@@ -1,0 +1,21 @@
+{
+     "enabled_commands": {
+        "nickname": true,
+        "avatar": true,
+        "dm": true,
+        "delete-channel": true,
+        "last-deleted": true, 
+        "embed": true,
+        "slowmode": true,
+        "rate": true,
+        "purge": true
+        },
+  "bot_activity": {
+    "type": "watching",
+    "name": "and assisting!",
+    "url": null 
+  },
+  "guild_id": "YOUR_GUILD_ID_HERE",
+  "token": "YOUR_BOT_TOKEN"
+
+}
