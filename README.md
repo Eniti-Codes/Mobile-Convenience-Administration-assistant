@@ -15,7 +15,6 @@ It's built to **complement your existing moderation tools**, not replace them. Y
 * **Embed:** Create **fully customizable and rich embeds** directly through the bot, bypassing clunky off-platform webhooks and saving you precious time.
 * **Slow Mode:** Effortlessly adjust slow mode settings for channels on the fly.
 * **Purge:** Efficiently clear message history in channels with a simple command.
-<img src="https://pixelfed.social/p/Eniti/841815492949775902" alt="Purge command" width="800">
 * **Nickname:** Allows **moderators** to quickly change a user's nickname if it's inappropriate or needs adjustment.
 * **Avatar:** Easily view a user's avatar in full resolution.
 
