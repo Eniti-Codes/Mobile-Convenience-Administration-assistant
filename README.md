@@ -10,7 +10,7 @@ It's built to **complement your existing moderation tools**, not replace them. Y
 ### Core Features (Current)
 
 * **Direct Message (DM):** Designed strictly for **moderation purposes**, allowing server moderators to send friendly, private reminders to users without needing to issue formal warnings or strikes.
-    ![]()
+    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Dm.gif)
 * **Delete Channel:** Swiftly remove channels, perfect for accidental creations or cleanup.
     ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Delete%20Channel.gif)
 * **Last Deleted Message:** A vital tool for **server moderators** to quickly retrieve the content of the last deleted message, aiding in moderation checks and incident review.
