@@ -10,13 +10,21 @@ It's built to **complement your existing moderation tools**, not replace them. Y
 ### Core Features (Current)
 
 * **Direct Message (DM):** Designed strictly for **moderation purposes**, allowing server moderators to send friendly, private reminders to users without needing to issue formal warnings or strikes.
+    ![]()
 * **Delete Channel:** Swiftly remove channels, perfect for accidental creations or cleanup.
+    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Delete%20Channel.gif)
 * **Last Deleted Message:** A vital tool for **server moderators** to quickly retrieve the content of the last deleted message, aiding in moderation checks and incident review.
+    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/last%20deleted.gif)
 * **Embed:** Create **fully customizable and rich embeds** directly through the bot, bypassing clunky off-platform webhooks and saving you precious time.
+    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/enbed.gif)
 * **Slow Mode:** Effortlessly adjust slow mode settings for channels on the fly.
+    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/slowmode.gif)
 * **Purge:** Efficiently clear message history in channels with a simple command.
+    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Purge.gif)
 * **Nickname:** Allows **moderators** to quickly change a user's nickname if it's inappropriate or needs adjustment.
+  ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Nickname.gif)
 * **Avatar:** Easily view a user's avatar in full resolution.
+  ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Avatar.gif))
 
 ---
 
