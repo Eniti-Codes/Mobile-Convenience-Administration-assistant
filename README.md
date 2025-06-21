@@ -24,7 +24,7 @@ It's built to **complement your existing moderation tools**, not replace them. Y
 * **Nickname:** Allows **moderators** to quickly change a user's nickname if it's inappropriate or needs adjustment.
   ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Nickname.gif)
 * **Avatar:** Easily view a user's avatar in full resolution.
-  ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Avatar.gif))
+  ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Avatar.gif)
 
 ---
 
