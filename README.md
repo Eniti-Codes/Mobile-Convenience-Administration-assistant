@@ -16,7 +16,7 @@ It's built to **complement your existing moderation tools**, not replace them. Y
 * **Last Deleted Message:** A vital tool for **server moderators** to quickly retrieve the content of the last deleted message, aiding in moderation checks and incident review.
     ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/last%20deleted.gif)
 * **Embed:** Create **fully customizable and rich embeds** directly through the bot, bypassing clunky off-platform webhooks and saving you precious time.
-    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Enbed.gif))
+    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Enbed.gif)
 * **Slow Mode:** Effortlessly adjust slow mode settings for channels on the fly.
     ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/slowmode.gif)
 * **Purge:** Efficiently clear message history in channels with a simple command.
