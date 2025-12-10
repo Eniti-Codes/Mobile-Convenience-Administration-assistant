@@ -8,24 +8,21 @@ It's built to **complement your existing moderation tools**, not replace them. Y
 ---
 
 ### Core Features (Current)
-
-* **Direct Message (DM):** Designed strictly for **moderation purposes**, allowing server moderators to send friendly, private reminders to users without needing to issue formal warnings or strikes.
-    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Dm.gif)
-* **Delete Channel:** Swiftly remove channels, perfect for accidental creations or cleanup.
-    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Delete%20Channel.gif)
-* **Last Deleted Message:** A vital tool for **server moderators** to quickly retrieve the content of the last deleted message, aiding in moderation checks and incident review.
-    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/last%20deleted.gif)
-* **Embed:** Create **fully customizable and rich embeds** directly through the bot, bypassing clunky off-platform webhooks and saving you precious time.
-    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Enbed.gif)
-* **Slow Mode:** Effortlessly adjust slow mode settings for channels on the fly.
-    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/slowmode.gif)
+* **DM:** Designed strictly for **moderation purposes**, allowing server moderators to send friendly, private reminders to users without needing to issue formal warnings or strikes.
+* **Say:** Allows a user to make the bot send a specific message to the channel, essentially acting as the bot.
 * **Purge:** Efficiently clear message history in channels with a simple command.
-    ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Purge.gif)
+* **Embed:** Create **fully customizable and rich embeds** directly through the bot, bypassing clunky off-platform webhooks and saving you precious time.
+* **Report:** Allows any server member to Report another user or message to the server moderators/administrators.
+* **Boinfo:** Displays information about the bot itself (e.g., uptime, server count, owner). Access to this detailed Bot Info
 * **Nickname:** Allows **moderators** to quickly change a user's nickname if it's inappropriate or needs adjustment.
-  ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Nickname.gif)
+* **SlowMode:** Effortlessly adjust slow mode settings for channels on the fly.
+* **Member_count:** Displays the current Member Count of the server.
+* **Last-Deleted:** A vital tool for **server moderators** to quickly retrieve the content of the last deleted message, aiding in moderation checks and incident review.
+* **Delete-Channel:** Swiftly remove channels, perfect for accidental creations or cleanup.
+* **Set-Report-Channel:** Configures which specific channel on the server new user Reports will be sent to.
+* **Rate:** A fun random number generator to rate words in Discord.
 * **Avatar:** Easily view a user's avatar in full resolution.
-  ![](https://github.com/Eniti-Codes/Mobile-Convenience-Administration-assistant/blob/main/Gifs/Avatar.gif)
-
+* **Emodify:** Converts a specified piece of text into emojis (e.g. spelling out a word using regional indicator emojis).
 ---
 
 ### Command Permissions
@@ -33,22 +30,20 @@ It's built to **complement your existing moderation tools**, not replace them. Y
 To ensure security and proper usage, each command has specific permission requirements:
 
 * **DM:** `Manage Server`
-* **Delete Channel:** `Manage Server`
-* **Last Deleted Message:** `Manage Channel`
-* **Avatar:** No specific permissions required (anyone can use).
-* **Slow Mode:** `Manage Channel`
-* **Nickname:** `Manage Channel`
-* **Embed:** `Manage Server`
+* **Say:** `Manage Channel`
 * **Purge:** `Manage Channel`
-
----
-
-### Future Enhancements (Planned)
-
-* **Bot Info:** Provides essential information about the bot itself, such as its version. (No specific permissions required; anyone will be able to use).
-
-* **Fixing the activities:** Currently the activities do not function whatsoever. Because I'm currently learning how Discord works with it. I'm just trying to pull it over what I know from JavaScript. It's not working out. :(
-
+* **Embed:** `Manage Server`
+* **Report:** `No specific permissions required (anyone can use).`
+* **Boinfo:** `Manage Server`
+* **Nickname:** `Manage Channel`
+* **SlowMode:** `Manage Channel`
+* **Member_count:** `No specific permissions required (anyone can use).`
+* **Last-Deleted:** `Manage Channel`
+* **Delete-Channel:** `Manage Server`
+* **Set-Report-Channel:** `Manage Server`
+* **Rate:** `No Pacific No specific permission required (anyone can use)`
+* **Avatar:** `No specific permissions required (anyone can use).`
+* **Emodify:** `No specific permissions required (anyone can use).`
 ---
 
 ### Setup Instructions
@@ -98,7 +93,5 @@ Getting your Mobile Convenience Administration Assistant up and running is strai
 Secure & Permission-Controlled: All administrative commands are strictly locked down. Top-level administrative commands require Discord's "Manage Server" permission, while lower-end commands require "Manage Channel" permission. This ensures only your most trusted administrators and moderators can utilize its powerful features, preventing misuse. Attempts by unauthorized users to execute these commands will result in an error.
 
 ### Developed by
-
-[Eniti-Codes](https://github.com/Eniti-Codes?tab=repositories)
-
+Eniti-Codes
 -----
