@@ -1,21 +1,28 @@
 {
      "enabled_commands": {
-        "nickname": true,
-        "avatar": true,
         "dm": true,
-        "delete-channel": true,
-        "last-deleted": true, 
+        "say": true,
+        "purge": true,
         "embed": true,
+        "report": true,
+        "botinfo": true,
+        "nickname": true,
         "slowmode": true,
-        "rate": true,
-        "purge": true
+        "member_count": true,
+        "last-deleted": true,
+        "delete-channel": true,
+        "set-report-channel": true,
+        "rate": false,
+        "avatar": false,
+        "emodify": false
         },
   "bot_activity": {
     "type": "watching",
-    "name": "and assisting!",
+    "name": "Watching and assisting!",
     "url": null 
   },
   "guild_id": "YOUR_GUILD_ID_HERE",
-  "token": "YOUR_BOT_TOKEN"
+  "token": "YOUR_BOT_TOKEN",
+  "invite_url": "YOUR_BOT_INVITE"
 
 }
