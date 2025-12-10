@@ -3,12 +3,16 @@ from discord import app_commands
 from discord.ext import commands
 import random
 import json
+import time
+import os
 
 CONFIG_FILE = 'config.json'
 def load_config():
     with open(CONFIG_FILE, 'r') as f:
         return json.load(f)
 config = load_config()
+
+START_TIME = time.time()
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='/', intents=intents)
@@ -48,23 +52,101 @@ async def on_ready():
     if activity:
         await bot.change_presence(activity=activity)
         print(f"Bot activity set to: {activity_type_str.capitalize()} {activity_name}")
-    # --- END SET BOT ACTIVITY ---
 
-        # --- UPDATE: Slash Command Syncing using Guild ID from config.json ---
+
+# --- Event: Channel Delete Cleanup ---
+@bot.event
+async def on_guild_channel_delete(channel):
+    """
+    Checks if a deleted channel was the configured report channel
+    for its guild and removes the setting if it was.
+    """
+    if not channel.guild or not isinstance(channel, discord.TextChannel):
+        return
+
+    guild_id_str = str(channel.guild.id)
+    
+    settings = load_guild_settings()
+
+    # 2. Check if this guild has settings and if the deleted channel ID matches the report ID
+    guild_settings = settings.get(guild_id_str)
+    
+    if guild_settings and guild_settings.get('report_channel_id') == str(channel.id):
+        
+        print(f"Cleanup: Report channel for Guild ID {guild_id_str} was deleted. Removing setting.")
+        
+        del guild_settings['report_channel_id']
+        
+        if not guild_settings:
+            del settings[guild_id_str]
+        
+        save_guild_settings(settings)
+
+# --- Event: Guild Remove Cleanup ---
+@bot.event
+async def on_guild_remove(guild):
+    """
+    Cleans up all settings associated with a guild when the bot is removed from it.
+    """
+    guild_id_str = str(guild.id)
+    
+    settings = load_guild_settings()
+
+    # Check if the guild ID exists in the settings file
+    if guild_id_str in settings:
+        
+        print(f"Cleanup: Bot removed from Guild ID {guild_id_str} ('{guild.name}'). Removing all settings.")
+        
+        del settings[guild_id_str]
+        
+        save_guild_settings(settings)
+
+
+        # --- Slash Command Syncing ---
+async def setup_hook():
     try:
-        guild_id = config.get('guild_id') # Get guild_id from config
+        synced_global = await bot.tree.sync()
+        print(f"Successfully synced {len(synced_global)} slash commands globally.")
+        
+        guild_id = config.get('guild_id')
         if guild_id:
-            # Ensure the guild_id is an integer for discord.Object
-            target_guild = discord.Object(id=int(guild_id)) 
-            synced = await bot.tree.sync(guild=target_guild)
-            print(f"Synced {len(synced)} slash commands to guild ID: {guild_id}")
-        else:
-            # If guild_id is not in config.json, sync globally (takes longer)
-            synced = await bot.tree.sync() 
-            print(f"Synced {len(synced)} slash commands globally (might take up to an hour to appear).")
+            target_guild = discord.Object(id=int(guild_id))  
+            synced_guild = await bot.tree.sync(guild=target_guild)
+            print(f"Successfully synced {len(synced_guild)} slash commands to guild ID: {guild_id}.")
+
     except Exception as e:
         print(f"Failed to sync slash commands: {e}")
-    # --- END UPDATE: Slash Command Syncing ---
+
+bot.setup_hook = setup_hook
+
+
+# --- GUILD SETTINGS FILE HANDLING ---
+GUILD_SETTINGS_FILE = 'guild_settings.json'
+
+def load_guild_settings():
+    """
+    Loads all guild-specific settings from the JSON file.
+    Creates the file with an empty dictionary if it does not exist.
+    """
+    if not os.path.exists(GUILD_SETTINGS_FILE):
+        print(f"Creating new {GUILD_SETTINGS_FILE}.")
+        with open(GUILD_SETTINGS_FILE, 'w') as f:
+            json.dump({}, f)
+        return {}
+        
+    try:
+        with open(GUILD_SETTINGS_FILE, 'r') as f:
+            return json.load(f)
+    except json.JSONDecodeError:
+        print(f"Warning: {GUILD_SETTINGS_FILE} is corrupted. Backing it up and starting with empty settings.")
+        if os.path.exists(GUILD_SETTINGS_FILE):
+            os.rename(GUILD_SETTINGS_FILE, GUILD_SETTINGS_FILE + '.corrupted_backup')
+        return {}
+
+def save_guild_settings(settings):
+    """Saves all guild-specific settings to the JSON file."""
+    with open(GUILD_SETTINGS_FILE, 'w') as f:
+        json.dump(settings, f, indent=4)
 
 
 # Apply the permissions check to all commands
@@ -78,7 +160,6 @@ def is_manage_channel():
         return interaction.user.guild_permissions.manage_channels
     return app_commands.check(predicate)
 
-    # --- Global Slash Command Error Handler
 @bot.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
 
@@ -104,11 +185,10 @@ def is_command_enabled():
     async def predicate(interaction: discord.Interaction):
         command_name = interaction.command.name
 
-        # Check if the command exists in our config and if it's enabled
         if command_name in config['enabled_commands']:
             return config['enabled_commands'][command_name]
         else:
-            return False # Default to disabled.
+            return False
     return app_commands.check(predicate)
 
 
@@ -126,6 +206,57 @@ async def send_dm(interaction: discord.Interaction, member: discord.Member, mess
         await interaction.response.send_message(f"Could not DM {member.mention}. They might have DMs disabled.", ephemeral=True)
     except Exception as e:
         await interaction.response.send_message(f"An error occurred while trying to DM {member.mention}: {e}", ephemeral=True)
+
+# --- Slash Command: Emodify (Text to Regional Indicator Emojis) ---
+REGIONAL_INDICATORS = {
+    'a': '🇦', 'b': '🇧', 'c': '🇨', 'd': '🇩', 'e': '🇪', 'f': '🇫', 'g': '🇬',
+    'h': '🇭', 'i': '🇮', 'j': '🇯', 'k': '🇰', 'l': '🇱', 'm': '🇲', 'n': '🇳',
+    'o': '🇴', 'p': '🇵', 'q': '🇶', 'r': '🇷', 's': '🇸', 't': '🇹', 'u': '🇺',
+    'v': '🇻', 'w': '🇼', 'x': '🇽', 'y': '🇾', 'z': '🇿',
+    '0': '0️⃣', '1': '1️⃣', '2': '2️⃣', '3': '3️⃣', '4': '4️⃣',
+    '5': '5️⃣', '6': '6️⃣', '7': '7️⃣', '8': '8️⃣', '9': '9️⃣',
+    '!': '❗', '?': '❓', ' ': '  ', 
+}
+
+@bot.tree.command(name='emodify', description='Converts text to regional indicator emojis.')
+@is_command_enabled()
+@app_commands.describe(text='The text to convert to emojis.')
+async def emodify(interaction: discord.Interaction, text: str):
+    """Converts the given text to regional indicator emojis."""
+    
+    await interaction.response.defer()
+
+    emojified_text = ""
+    for char in text.lower():
+        emoji = REGIONAL_INDICATORS.get(char, char) 
+        emojified_text += emoji + " " 
+        
+    if len(emojified_text) > 2000:
+        await interaction.followup.send("The resulting emoji text is too long for Discord's message limit (2000 characters).", ephemeral=True)
+        return
+        
+    await interaction.followup.send(emojified_text)
+
+
+# --- Slash Command: Say (delete and re-send) ---
+@bot.tree.command(name='say', description='Deletes your command and sends the message you want to say.')
+@is_manage_channel() 
+@is_command_enabled()
+@app_commands.describe(message=':/')
+async def say_command(interaction: discord.Interaction, message: str):
+    """Deletes the interaction message and sends the user's message as the bot."""
+    
+    await interaction.response.defer(ephemeral=True, thinking=True)
+    
+    try:
+        await interaction.channel.send(message)
+        await interaction.delete_original_response() 
+        
+    except discord.Forbidden:
+        await interaction.followup.send("I sent the message, but I couldn't delete the command execution message. I might lack **Manage Messages** permission.", ephemeral=True)
+    except Exception as e:
+        await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+
 
                #Slash Command:Delete Channel
 @bot.tree.command(name='delete-channel', description='Deletes the specified channel.')
@@ -177,22 +308,49 @@ async def avatar_command(interaction: discord.Interaction, member: discord.Membe
     """
     Displays a user's avatar.
     """
-    # If no member is provided, default to the user who invoked the command
     target_member = member or interaction.user
 
-    # Get the avatar URL. `display_avatar.url` is preferred as it handles
-    # guild-specific avatars and defaults gracefully.
     avatar_url = target_member.display_avatar.url
 
-    # Create an Embed to make the message look nice
     embed = discord.Embed(
         title=f"{target_member.display_name}'s Avatar",
-        color=discord.Color.blue() # You can choose any color
+        color=discord.Color.blue()
     )
     embed.set_image(url=avatar_url)
     embed.set_footer(text=f"Requested by {interaction.user.display_name}", icon_url=interaction.user.display_avatar.url)
 
     await interaction.response.send_message(embed=embed, ephemeral=True)
+
+
+# --- Slash Command: Member Count ---
+@bot.tree.command(name='member_count', description='Displays the total member count and user/bot breakdown.')
+@is_command_enabled()
+async def member_count(interaction: discord.Interaction):
+    """
+    Displays the total member count, excluding bots and as a separate category.
+    """
+    
+    if not interaction.guild:
+        await interaction.response.send_message("This command can only be used in a server.", ephemeral=True)
+        return
+
+    # Count members and bots
+    total_members = interaction.guild.member_count
+    
+    user_members = sum(1 for member in interaction.guild.members if not member.bot)
+    
+    bot_members = total_members - user_members
+
+    embed = discord.Embed(
+        title=f"👥 Member Count for {interaction.guild.name}",
+        color=discord.Color.gold()
+    )
+
+    embed.add_field(name="Total Members", value=f"**{total_members}**", inline=False)
+    embed.add_field(name="Non-Bot Users", value=f"**{user_members}**", inline=True)
+    embed.add_field(name="Bots", value=f"**{bot_members}**", inline=True)
+
+    await interaction.response.send_message(embed=embed)
 
                 #Slash Command:Slowmode
 @bot.tree.command(name='slowmode', description='Sets the slow mode delay for this channel.')
@@ -201,7 +359,7 @@ async def avatar_command(interaction: discord.Interaction, member: discord.Membe
 @app_commands.describe(seconds='The slow mode delay in seconds (0 to disable).')
 async def slowmode(interaction: discord.Interaction, seconds: int):
     """Sets the slow mode delay for the current channel."""
-    if 0 <= seconds <= 21600:  # Discord slow mode limit
+    if 0 <= seconds <= 21600: 
         await interaction.channel.edit(slowmode_delay=seconds)
         if seconds > 0:
             await interaction.response.send_message(f"Set slow mode in this channel to {seconds} seconds.", ephemeral=True)
@@ -232,7 +390,6 @@ def hex_to_discord_color(hex_string: str) -> discord.Color:
 )
 async def change_nickname(interaction: discord.Interaction, user: discord.Member, new_nickname: str = None):
     
-    # Check if the bot has permissions to change nicknames
     if not interaction.guild.me.guild_permissions.manage_nicknames:
         await interaction.response.send_message("I don't have permission to manage nicknames in this server.", ephemeral=True)
         return
@@ -253,6 +410,188 @@ async def change_nickname(interaction: discord.Interaction, user: discord.Member
     except Exception as e:
         await interaction.response.send_message(f"An error occurred: {e}", ephemeral=True)
 
+# --- Slash Command: Botinfo (Technical Info) ---
+def format_uptime(seconds):
+    """Converts seconds into a human-readable duration string."""
+    seconds = int(seconds)
+    days, seconds = divmod(seconds, 86400)
+    hours, seconds = divmod(seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+    
+    parts = []
+    if days:
+        parts.append(f"{days}d")
+    if hours:
+        parts.append(f"{hours}h")
+    if minutes:
+        parts.append(f"{minutes}m")
+    if seconds:
+        parts.append(f"{seconds}s")
+        
+    return ", ".join(parts) if parts else "Less than 1 second"
+
+@bot.tree.command(name='botinfo', description='Displays technical information about the bot.')
+@is_manage_guild()
+@is_command_enabled()
+async def botinfo(interaction: discord.Interaction):
+    """Gives technical information about the bot (uptime, ping, server count, invite link, etc.)."""
+
+    # Calculate Uptime
+    current_time = time.time()
+    uptime_seconds = current_time - START_TIME 
+    uptime_string = format_uptime(uptime_seconds)
+
+    ping_ms = round(bot.latency * 1000)
+    
+    guild_count = len(bot.guilds)
+    total_users = sum(guild.member_count for guild in bot.guilds) 
+    dpy_version = discord.__version__
+
+    invite_link = config.get('invite_url')
+
+    embed = discord.Embed(
+        title=f"{bot.user.name} Bot Info",
+        description="A summary of the bot's current operational status.",
+        color=discord.Color.blue()
+    )
+    
+    embed.add_field(name="🟢 Uptime", value=uptime_string, inline=False)
+    embed.add_field(name="⚡ Ping (Latency)", value=f"{ping_ms}ms", inline=True)
+    embed.add_field(name="💻️ Discord.py Version", value=dpy_version, inline=True)
+    embed.add_field(name="🌍 Servers", value=str(guild_count), inline=True)
+    embed.add_field(name="👥 Total Users", value=str(total_users), inline=True)
+
+    embed.set_thumbnail(url=bot.user.display_avatar.url)
+    embed.set_footer(text=f"Bot ID: {bot.user.id}")
+
+    if invite_link:
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(label="Invite Bot", url=invite_link, style=discord.ButtonStyle.link))
+        
+        await interaction.response.send_message(embed=embed, view=view)
+    else:
+
+        await interaction.response.send_message(embed=embed)
+
+
+# --- Slash Command: Set Report Channel ---
+@bot.tree.command(name='set-report-channel', description='Sets the channel where user reports will be sent for this server.')
+@is_manage_guild()
+@is_command_enabled()
+@app_commands.describe(channel='The text channel to receive reports.')
+async def set_report_channel(interaction: discord.Interaction, channel: discord.TextChannel):
+    """Sets the designated report channel for the current guild."""
+    guild_id_str = str(interaction.guild_id)
+    channel_id_str = str(channel.id)
+
+    if not channel.permissions_for(interaction.guild.me).send_messages or \
+       not channel.permissions_for(interaction.guild.me).embed_links:
+        await interaction.response.send_message(
+            f"I don't have permission to send messages and embeds in {channel.mention}.",
+            ephemeral=True
+        )
+        return
+        
+    settings = load_guild_settings()
+    
+    # Store the setting under the guild's ID
+    if guild_id_str not in settings:
+        settings[guild_id_str] = {}
+        
+    settings[guild_id_str]['report_channel_id'] = channel_id_str
+    
+    save_guild_settings(settings)
+    
+    await interaction.response.send_message(
+        f"✅ This channel ({channel.mention}) has been set as the official Report Channel for this server.",
+        ephemeral=True
+    )
+
+# --- Slash Command: Report User ---
+# Cooldown: 1 use per 60 seconds, tracked per user.
+@bot.tree.command(name='report', description='Reports a user to the moderators.')
+@is_command_enabled()
+@app_commands.checks.cooldown(1, 60.0, key=lambda i: i.user.id)
+@app_commands.describe(
+    member='The user you wish to report.',
+    reason='The reason for the report.',
+    message_link='Optional: A link to the specific message being reported.'
+)
+async def report_user(
+    interaction: discord.Interaction, 
+    member: discord.Member, 
+    reason: str, 
+    message_link: str = None
+):
+    """
+    Sends a report about a user to a designated moderator channel, including an optional message link.
+    """
+    guild_id_str = str(interaction.guild_id)
+    settings = load_guild_settings()
+    
+    # 2. Check if the report channel is configured for this guild
+    report_channel_id = settings.get(guild_id_str, {}).get('report_channel_id')
+
+    if not report_channel_id:
+        await interaction.response.send_message(
+            "⚠️ **The report channel has not been set for this server.** A moderator must use `/set-report-channel` first.", 
+            ephemeral=True
+        )
+        return
+
+    report_channel = interaction.guild.get_channel(int(report_channel_id))
+    
+    if not report_channel:
+        await interaction.response.send_message(
+            f"⚠️ The configured report channel (ID: `{report_channel_id}`) was not found. Please ask a moderator to re-configure it.",
+            ephemeral=True
+        )
+        return
+    
+    if member == interaction.user:
+        await interaction.response.send_message(
+            "You cannot report yourself!",
+            ephemeral=True
+        )
+        return
+
+    report_embed = discord.Embed(
+        title="New User Report!",
+        color=discord.Color.red(),
+        timestamp=interaction.created_at
+    )
+    
+    report_embed.add_field(name="Reported User", value=f"{member.mention} (`{member.id}`)", inline=False)
+    report_embed.add_field(name="Reported By", value=f"{interaction.user.mention} (`{interaction.user.id}`)", inline=False)
+    report_embed.add_field(name="Channel", value=interaction.channel.mention, inline=False)
+    report_embed.add_field(name="Reason", value=reason, inline=False)
+
+    if message_link:
+     report_embed.add_field(name="Message Link", value=f"[Jump to Message]({message_link})", inline=False)
+    
+    report_embed.set_thumbnail(url=member.display_avatar.url)
+    
+    try:
+        await report_channel.send(embed=report_embed)
+        
+        await interaction.response.send_message(
+            f"Successfully reported {member.mention} for **{reason}**." + 
+            (" The message link was included." if message_link else "") +
+            " Thank you!",
+            ephemeral=True
+        )
+    except discord.Forbidden:
+        await interaction.response.send_message(
+            f"I cannot send the report to the configured channel ({report_channel.mention}). Check my permissions in that channel.",
+            ephemeral=True
+        )
+    except Exception as e:
+        await interaction.response.send_message(
+            f"An unexpected error occurred while processing the report: {e}",
+            ephemeral=True
+        )
+
+
 # --- Slash Command: Embed ---
 @bot.tree.command(name="embed", description="Creates and sends a custom embed message.")
 @is_manage_guild()
@@ -266,10 +605,8 @@ async def change_nickname(interaction: discord.Interaction, user: discord.Member
     thumbnail_url="URL for a small image displayed in the top right corner.",
     footer_text="Text for the footer of the embed.",
     footer_icon_url="URL for the icon next to the footer text."
-    # Note: Adding fields directly via command arguments can be complex due to Discord's limits
-    # and the number of arguments. For advanced embeds, consider multi-step or modals.
 )
-@app_commands.default_permissions(manage_messages=True) # Usually embed creation requires message management
+@app_commands.default_permissions(manage_messages=True)
 async def embed_command(
     interaction: discord.Interaction,
     channel: discord.TextChannel = None,
@@ -283,7 +620,6 @@ async def embed_command(
 ):
     target_channel = channel or interaction.channel
 
-    # Basic permission check: does the bot have permission to send embeds in the target channel?
     if not target_channel.permissions_for(interaction.guild.me).send_messages or \
        not target_channel.permissions_for(interaction.guild.me).embed_links:
         await interaction.response.send_message(
@@ -352,7 +688,7 @@ async def rate(interaction: discord.Interaction, text: str):
 
     await interaction.response.send_message(response_message)
 
-
+        # --- Purge Slash Command ---
 @bot.tree.command(name='purge', description='Deletes a specified number of messages.')
 @is_manage_channel()
 @is_command_enabled()
