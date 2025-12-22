@@ -10,6 +10,7 @@
         "slowmode": true,
         "member_count": true,
         "last-deleted": true,
+        "clone-channel": true,
         "delete-channel": true,
         "set-report-channel": true,
         "rate": false,
@@ -24,5 +25,7 @@
   "guild_id": "YOUR_GUILD_ID_HERE",
   "token": "YOUR_BOT_TOKEN",
   "invite_url": "YOUR_BOT_INVITE"
+  "feedback_channel_id": "YOUR_CHANNEL_ID_HERE"
 
 }
+
