@@ -24,8 +24,8 @@
   },
   "guild_id": "YOUR_GUILD_ID_HERE",
   "token": "YOUR_BOT_TOKEN",
-  "invite_url": "YOUR_BOT_INVITE"
+  "invite_url": "YOUR_BOT_INVITE",
+  "dm_forwarding": false,
   "feedback_channel_id": "YOUR_CHANNEL_ID_HERE"
 
 }
-
