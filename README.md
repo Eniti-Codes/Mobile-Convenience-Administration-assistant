@@ -18,12 +18,14 @@ It's built to **complement your existing moderation tools**, not replace them. Y
 * **SlowMode:** Effortlessly adjust slow mode settings for channels on the fly.
 * **Member_count:** Displays the current Member Count of the server.
 * **Last-Deleted:** A vital tool for **server moderators** to quickly retrieve the content of the last deleted message, aiding in moderation checks and incident review.
+* **Clone-Channel:** Allows you to clone your channel permissions and rename your clone channel
 * **Delete-Channel:** Swiftly remove channels, perfect for accidental creations or cleanup.
 * **Set-Report-Channel:** Configures which specific channel on the server new user Reports will be sent to.
 * **Rate:** A fun random number generator to rate words in Discord.
 * **Avatar:** Easily view a user's avatar in full resolution.
 * **Emodify:** Converts a specified piece of text into emojis (e.g. spelling out a word using regional indicator emojis).
 ---
+
 
 ### Command Permissions
 
@@ -39,6 +41,7 @@ To ensure security and proper usage, each command has specific permission requir
 * **SlowMode:** `Manage Channel`
 * **Member_count:** `No specific permissions required (anyone can use).`
 * **Last-Deleted:** `Manage Channel`
+* **Clone-Channel:** `Manage Channel` `Manage Server`
 * **Delete-Channel:** `Manage Server`
 * **Set-Report-Channel:** `Manage Server`
 * **Rate:** `No Pacific No specific permission required (anyone can use)`
@@ -88,6 +91,71 @@ Getting your Mobile Convenience Administration Assistant up and running is strai
 
     
 ---
+
+Since it’s a Python bot using only the `discord.py` library and no complex dependency files, we can make these instructions even shorter and more direct.
+
+Here is the refined guide for your users to get the bot running on Termux using the ZIP download method.
+
+---
+
+## Running the Bot on Termux
+
+### 1. Prepare the Environment
+Open Termux and run these commands to update your system and install Python:
+
+```bash
+pkg update && pkg upgrade -y
+pkg install python unzip -y
+
+```
+
+### 2. Get the Files
+1. Go to the **Releases** tab on the project page.
+2. Download the **zip**.
+3. In Termux, give it access to your files and move to your download folder:
+```bash
+termux-setup-storage
+cd ~/storage/downloads
+
+```
+
+
+4. Unzip the folder and enter it:
+```bash
+unzip [Your-Downloaded-File].zip
+cd [Extracted-Folder-Name]
+
+```
+
+
+
+### 3. Install the Discord Library
+Since the bot only requires the Discord gateway library, run this command:
+
+```bash
+pip install discord.py
+
+```
+
+### 4. Launch the Bot
+Open your configuration file `config.json` to paste your Bot Token, then start the bot:
+
+```bash
+python main.py
+
+```
+
+
+### 4. Stay Online
+
+To make sure your bot doesn't disconnect when you close the Termux app:
+
+* Pull down your Android notification bar.
+* Find the Termux notification.
+* Tap **Acquire WakeLock**. This prevents Android from putting the app to sleep.
+
+---
+
 ### Additional information
     
 Secure & Permission-Controlled: All administrative commands are strictly locked down. Top-level administrative commands require Discord's "Manage Server" permission, while lower-end commands require "Manage Channel" permission. This ensures only your most trusted administrators and moderators can utilize its powerful features, preventing misuse. Attempts by unauthorized users to execute these commands will result in an error.
